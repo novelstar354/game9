@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;font-family:sans-serif;background:#111;color:#fff;display:flex;justify-content:center;overflow-x:hidden;}
-game{width:100%;max-width:480px;padding:10px;position:relative;}
+#game{width:100%;max-width:480px;padding:10px;position:relative;}
 .screen{display:none;}
 .screen.active{display:block;}
 button{padding:8px 12px;margin:3px;font-size:14px;cursor:pointer;}
@@ -86,11 +86,7 @@ h1{text-align:center;margin-top:50px;}
 <audio id="se-lose" src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>
 
 <script>
-// ----------------------------
-// フル統合RPG 完全版
-// ----------------------------
-let player={}, enemies=[], selectedTarget=null, currentSkill=null, comboCount=0;
-let skillCooldown=[0,0,0], itemCount=3, stage=1;
+let player={}, enemies=[], selectedTarget=null, currentSkill=null, skillCooldown=[0,0,0], itemCount=3, stage=1;
 const attrMultiplier={ fire:{fire:1,water:0.5,wind:1.5}, water:{fire:1.5,water:1,wind:0.5}, wind:{fire:0.5,water:1.5,wind:1} };
 const bgm=document.getElementById('bgm'); bgm.volume=0.2; bgm.play().catch(()=>{});
 const seAttack=document.getElementById('se-attack'), seSkill=document.getElementById('se-skill'), seWin=document.getElementById('se-win'), seLose=document.getElementById('se-lose');
@@ -102,8 +98,8 @@ function switchScreen(screenId){
 }
 
 function startGame(character){
-  player={ 
-    name:character, attr:character==='戦士'?'fire':'water', 
+  player={
+    name:character, attr:character==='戦士'?'fire':'water',
     maxHp:character==='戦士'?150:100, hp:character==='戦士'?150:100,
     maxMp:character==='戦士'?50:100, mp:character==='戦士'?50:100, attack:character==='戦士'?20:15,
     level:1, exp:0, nextExp:100,
@@ -111,14 +107,138 @@ function startGame(character){
       {name:'大斬り', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif'},
       {name:character==='戦士'?'毒突き':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif'},
       {name:'雷撃', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif'}
-    ] 
+    ]
   };
   document.getElementById('player-img').src=character==='戦士'?'https://i.imgur.com/5n0n4lW.gif':'https://i.imgur.com/YOUR_MAGIC_GIF.gif';
-  stage=1; itemCount=3; skillCooldown=[0,0,0]; spawnEnemies(); updateUI(); logBattle('バトル開始！'); switchScreen('screen-battle'); 
+  stage=1; itemCount=3; skillCooldown=[0,0,0];
+  loadGame();
+  spawnEnemies(); updateUI(); logBattle('バトル開始！'); switchScreen('screen-battle');
 }
 
-// ※ このHTMLをブラウザで開くだけで、スタート画面からフル統合RPGとして遊べます。
-// 攻撃・スキル・敵攻撃・ステージ無限・ボス・コンボ・状態異常・セーブ/ロードまで統合済み
+// -------------------- ゲーム本体 --------------------
+function spawnEnemies(){
+  enemies=[]; selectedTarget=null;
+  const container=document.getElementById('enemy-container'); container.innerHTML='';
+  const enemyCount=Math.min(stage,3);
+  for(let i=0;i<enemyCount;i++){
+    let enemy={ name:`敵${i+1}`, attr:['fire','water','wind'][Math.floor(Math.random()*3)],
+      maxHp:50+stage*10, hp:50+stage*10, attack:5+stage*2, status:'none'};
+    enemies.push(enemy);
+    const div=document.createElement('div'); div.className='enemy-box';
+    div.innerHTML=`${enemy.name} <span class="status"></span>`;
+    div.onclick=()=>{ selectEnemy(i); };
+    container.appendChild(div);
+  }
+  updateUI();
+}
+
+function selectEnemy(index){
+  selectedTarget=index;
+  document.querySelectorAll('.enemy-box').forEach((e,i)=>e.classList.toggle('selected',i===index));
+}
+
+function playerAttack(){
+  if(selectedTarget===null){ logBattle('ターゲットを選んでください'); return; }
+  const enemy=enemies[selectedTarget];
+  let damage=player.attack*(attrMultiplier[player.attr][enemy.attr]||1);
+  enemy.hp-=damage; logBattle(`${player.name}の攻撃！${enemy.name}に${damage}ダメージ`);
+  seAttack.play(); showEffect('attack',selectedTarget);
+  checkEnemyDefeat(); enemyTurn(); updateUI(); saveGame();
+}
+
+function prepareSkill(skillIndex){
+  if(skillCooldown[skillIndex]>0){ logBattle('クール中です'); return; }
+  if(player.mp<player.skills[skillIndex].cost){ logBattle('MPが足りません'); return; }
+  currentSkill=skillIndex; useSkill(skillIndex);
+}
+
+function useSkill(skillIndex){
+  if(selectedTarget===null){ logBattle('ターゲットを選んでください'); return; }
+  const skill=player.skills[skillIndex]; const enemy=enemies[selectedTarget];
+  player.mp-=skill.cost; skillCooldown[skillIndex]=3;
+  let damage=skill.effect==='heal'?0:skill.power*(attrMultiplier[player.attr][enemy.attr]||1);
+  if(skill.effect==='heal'){ player.hp=Math.min(player.maxHp,player.hp+skill.power); logBattle(`${player.name}が回復！HP+${skill.power}`); }
+  else{ enemy.hp-=damage; logBattle(`${player.name}の${skill.name}！${enemy.name}に${damage}ダメージ`); }
+  seSkill.play(); showEffect(skillIndex,selectedTarget);
+  checkEnemyDefeat(); enemyTurn(); updateUI(); saveGame();
+}
+
+function enemyTurn(){
+  enemies.forEach((enemy,i)=>{
+    if(enemy.hp<=0) return;
+    let damage=enemy.attack; player.hp-=damage;
+    logBattle(`${enemy.name}の攻撃！${player.name}に${damage}ダメージ`);
+    showEffect('enemy',i);
+  });
+  if(player.hp<=0){ gameOver(); } reduceCooldown(); updateUI(); saveGame();
+}
+
+function checkEnemyDefeat(){
+  enemies.forEach((e,i)=>{
+    if(e.hp<=0){
+      const div=document.querySelectorAll('.enemy-box')[i]; div.style.opacity=0.5;
+      logBattle(`${e.name}を倒した！`);
+    }
+  });
+  if(enemies.every(e=>e.hp<=0)){
+    stage++; logBattle('ステージクリア！'); seWin.play();
+    setTimeout(nextStage,1000);
+  }
+}
+
+function nextStage(){ spawnEnemies(); updateUI(); saveGame(); }
+
+function useItem(){
+  if(itemCount<=0){ logBattle('アイテムがありません'); return; }
+  player.hp=Math.min(player.maxHp,player.hp+50); itemCount--;
+  logBattle('回復アイテム使用！HP+50'); updateUI(); saveGame();
+}
+
+function reduceCooldown(){ skillCooldown=skillCooldown.map(c=>c>0?c-1:0); }
+
+function logBattle(msg){
+  const log=document.getElementById('battle-log'); log.innerHTML+=msg+'<br>'; log.scrollTop=log.scrollHeight;
+}
+
+function showEffect(type,index){
+  const container=document.getElementById('player-container');
+  const img=document.createElement('img'); img.className='effect-img';
+  img.src='https://i.imgur.com/9bX8hEX.gif'; container.appendChild(img);
+  setTimeout(()=>{ img.remove(); },800);
+}
+
+function gameOver(){
+  logBattle('ゲームオーバー...'); seLose.play();
+  switchScreen('screen-result'); document.getElementById('result-message').textContent=`ステージ${stage}で敗北`;
+}
+
+function restartGame(){ localStorage.removeItem('rpgSave'); startGame(player.name); updateUI(); }
+
+function updateUI(){
+  document.getElementById('player-name').textContent=player.name;
+  document.getElementById('player-level').textContent=player.level;
+  document.getElementById('player-exp').textContent=player.exp;
+  document.getElementById('player-next').textContent=player.nextExp;
+  document.getElementById('player-hp').style.width=(player.hp/player.maxHp*100)+'%';
+  document.getElementById('player-mp').style.width=(player.mp/player.maxMp*100)+'%';
+  skillCooldown.forEach((c,i)=>{ document.getElementById('cool'+i).textContent=c>0?`(${c})`:''; });
+  document.getElementById('item-count').textContent=itemCount;
+  document.getElementById('stage-number').textContent=stage;
+}
+
+// -------------------- セーブ・ロード --------------------
+function saveGame(){
+  const saveData={player,stage,skillCooldown,itemCount,enemies};
+  localStorage.setItem('rpgSave',JSON.stringify(saveData));
+}
+
+function loadGame(){
+  const save=localStorage.getItem('rpgSave');
+  if(save){
+    const data=JSON.parse(save); player=data.player; stage=data.stage; skillCooldown=data.skillCooldown;
+    itemCount=data.itemCount; enemies=data.enemies; logBattle('セーブデータをロードしました'); updateUI();
+  }
+}
 </script>
 </body>
 </html>
