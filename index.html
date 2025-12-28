@@ -64,9 +64,9 @@ h1{text-align:center;margin-top:50px;}
 <div id="battle-log"></div>
 <div>
 <button onclick="playerAttack()">通常攻撃</button>
-<button onclick="prepareSkill(0)" id="skill0">スキル1<span id="cool0" class="cooldown"></span></button>
-<button onclick="prepareSkill(1)" id="skill1">スキル2<span id="cool1" class="cooldown"></span></button>
-<button onclick="prepareSkill(2)" id="skill2">スキル3<span id="cool2" class="cooldown"></span></button>
+<button onclick="prepareSkill(0)" id="skill0">スキル1:物理<span id="cool0" class="cooldown"></span></button>
+<button onclick="prepareSkill(1)" id="skill1">スキル2:毒<span id="cool1" class="cooldown"></span></button>
+<button onclick="prepareSkill(2)" id="skill2">スキル3:電撃<span id="cool2" class="cooldown"></span></button>
 <button onclick="useItem()">回復アイテム(<span id="item-count"></span>)</button>
 </div>
 <div>ステージ: <span id="stage-number"></span></div>
@@ -106,10 +106,10 @@ function startGame(character){
     maxMp:character==='戦士'?50:100, mp:character==='戦士'?50:100, attack:character==='戦士'?20:15,
     level:1, exp:0, nextExp:100,
     skills:[
-      {name:'大斬り', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
-      {name:character==='戦士'?'毒突き':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
+      {name:'スラッシュ', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
+      {name:character==='戦士'?'ポイズンミスト':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
        desc:character==='戦士'?'毒で毎ターンダメージ':'HPを回復'},
-      {name:'雷撃', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
+      {name:'ジオダイン', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
     ]
   };
   document.getElementById('player-img').src=character==='戦士'?'https://i.imgur.com/5n0n4lW.gif':'https://i.imgur.com/YOUR_MAGIC_GIF.gif';
