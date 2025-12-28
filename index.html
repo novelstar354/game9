@@ -64,7 +64,7 @@ h1{text-align:center;margin-top:50px;}
 <div>
 <button onclick="playerAttack()">通常攻撃</button>
 <button onclick="prepareSkill(0)" id="skill0">スキル1:物理<span id="cool0" class="cooldown"></span></button>
-<button onclick="prepareSkill(1)" id="skill1">スキル2:毒<span id="cool1" class="cooldown"></span></button>
+<button onclick="prepareSkill(1)" id="skill1">スキル2:特殊<span id="cool1" class="cooldown"></span></button>
 <button onclick="prepareSkill(2)" id="skill2">スキル3:電撃<span id="cool2" class="cooldown"></span></button>
 <button onclick="useItem()">回復アイテム(<span id="item-count"></span>)</button>
 </div>
@@ -105,7 +105,7 @@ function startGame(character){
     level:1, exp:0, nextExp:100,
     skills:[
       {name:'スラッシュ', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
-      {name:character==='戦士'?'ポイズンミスト':'ブレインジャック', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
+      {name:character==='戦士'?'ポイズンミスト':'ディアラマ', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
        desc:character==='戦士'?'毒で毎ターンダメージ':'HPを回復'},
       {name:'ジオダイン', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
     ]
