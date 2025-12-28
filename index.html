@@ -21,6 +21,7 @@ button{padding:8px 12px;margin:3px;font-size:14px;cursor:pointer;}
 .enemy-box{background:#333;padding:5px;border-radius:5px;margin-bottom:5px;position:relative;cursor:pointer;transition: all 0.3s;}
 .enemy-box.selected{border:2px solid #ff0;transform:scale(1.05);}
 .status{font-size:12px;color:#ff0;margin-left:5px;}
+.enemy-hp{font-size:12px;color:#f00;position:absolute;right:5px;top:5px;}
 .bg-flash{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:1000;}
 #player-container{position:relative;height:150px;}
 #player-img,.enemy-img{position:absolute;bottom:0;width:80px;transition: all 0.3s;}
@@ -28,13 +29,13 @@ button{padding:8px 12px;margin:3px;font-size:14px;cursor:pointer;}
 @keyframes effectMove{0%{opacity:1;}100%{opacity:0;transform:translateY(-50px) scale(1.5);}}
 h1{text-align:center;margin-top:50px;}
 .start-btn{text-align:center;margin-top:30px;}
+.hp-mp-text{font-size:12px;margin-left:5px;}
 </style>
 </head>
 <body>
 <div id="game">
 <div class="bg-flash" id="bg-flash"></div>
 
-<!-- スタート画面 -->
 <div id="screen-start" class="screen active">
 <h1>統合RPG</h1>
 <div class="start-btn">
@@ -43,20 +44,18 @@ h1{text-align:center;margin-top:50px;}
 </div>
 </div>
 
-<!-- キャラクター選択 -->
 <div id="screen-select" class="screen">
 <h2>キャラクター選択</h2>
 <button onclick="startGame('戦士')">戦士</button>
 <button onclick="startGame('魔法使い')">魔法使い</button>
 </div>
 
-<!-- バトル画面 -->
 <div id="screen-battle" class="screen">
 <h2>バトル</h2>
 <div>
 <b>あなた: </b><span id="player-name"></span> Lv:<span id="player-level"></span> EXP:<span id="player-exp"></span>/<span id="player-next"></span>
-<div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div></div>
-<div class="mp-bar"><div id="player-mp" class="mp-bar-inner"></div></div>
+<div class="hp-bar"><div id="player-hp" class="hp-bar-inner"></div> <span id="player-hp-text" class="hp-mp-text"></span></div>
+<div class="mp-bar"><div id="player-mp" class="mp-bar-inner"></div> <span id="player-mp-text" class="hp-mp-text"></span></div>
 <div class="exp-bar"><div id="player-expbar" class="exp-bar-inner"></div></div>
 </div>
 <div id="player-container"><img id="player-img" src=""></div>
@@ -64,15 +63,14 @@ h1{text-align:center;margin-top:50px;}
 <div id="battle-log"></div>
 <div>
 <button onclick="playerAttack()">通常攻撃</button>
-<button onclick="prepareSkill(0)" id="skill0">スキル1:物理<span id="cool0" class="cooldown"></span></button>
-<button onclick="prepareSkill(1)" id="skill1">スキル2:毒<span id="cool1" class="cooldown"></span></button>
-<button onclick="prepareSkill(2)" id="skill2">スキル3:電撃<span id="cool2" class="cooldown"></span></button>
+<button onclick="prepareSkill(0)" id="skill0">スキル1<span id="cool0" class="cooldown"></span></button>
+<button onclick="prepareSkill(1)" id="skill1">スキル2<span id="cool1" class="cooldown"></span></button>
+<button onclick="prepareSkill(2)" id="skill2">スキル3<span id="cool2" class="cooldown"></span></button>
 <button onclick="useItem()">回復アイテム(<span id="item-count"></span>)</button>
 </div>
 <div>ステージ: <span id="stage-number"></span></div>
 </div>
 
-<!-- リザルト画面 -->
 <div id="screen-result" class="screen">
 <h2>バトル終了</h2>
 <div id="result-message"></div>
@@ -106,28 +104,29 @@ function startGame(character){
     maxMp:character==='戦士'?50:100, mp:character==='戦士'?50:100, attack:character==='戦士'?20:15,
     level:1, exp:0, nextExp:100,
     skills:[
-      {name:'スラッシュ', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
-      {name:character==='戦士'?'ポイズンミスト':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
+      {name:'大斬り', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
+      {name:character==='戦士'?'毒突き':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
        desc:character==='戦士'?'毒で毎ターンダメージ':'HPを回復'},
-      {name:'ジオダイン', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
+      {name:'雷撃', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
     ]
   };
   document.getElementById('player-img').src=character==='戦士'?'https://i.imgur.com/5n0n4lW.gif':'https://i.imgur.com/YOUR_MAGIC_GIF.gif';
-  stage=1; itemCount=3; skillCooldown=[0,0,0];
+  stage=1; skillCooldown=[0,0,0];
   loadGame(); spawnEnemies(); updateUI(); logBattle('バトル開始！'); switchScreen('screen-battle'); updateSkillButtons();
 }
 
-// -------------------- ゲーム本体 --------------------
 function spawnEnemies(){
   enemies=[]; selectedTarget=null;
   const container=document.getElementById('enemy-container'); container.innerHTML='';
+  itemCount = 3; // ステージ開始時HP回復アイテム3つ
+  logBattle('新しいステージ開始！HP回復アイテムを3つ入手');
   const enemyCount=Math.min(stage,3);
   for(let i=0;i<enemyCount;i++){
     let enemy={ name:`敵${i+1}`, attr:['fire','water','wind'][Math.floor(Math.random()*3)],
-      maxHp:50+stage*10, hp:50+stage*10, attack:5+stage*2, status:'none'};
+      maxHp:50+stage*10, hp:50+stage*10, attack:5+stage*2, status:'none', defeated:false};
     enemies.push(enemy);
     const div=document.createElement('div'); div.className='enemy-box';
-    div.innerHTML=`${enemy.name} <span class="status"></span>`;
+    div.innerHTML=`${enemy.name} <span class="enemy-hp">${enemy.hp}/${enemy.maxHp}</span>`;
     div.onclick=()=>{ selectEnemy(i); };
     container.appendChild(div);
   }
@@ -183,9 +182,14 @@ function enemyTurn(){
 
 function checkEnemyDefeat(){
   enemies.forEach((e,i)=>{
-    if(e.hp<=0){
+    if(e.hp<=0 && !e.defeated){
+      e.defeated = true;
       const div=document.querySelectorAll('.enemy-box')[i]; div.style.opacity=0.5;
       logBattle(`${e.name}を倒した！`);
+      // MP回復: ステージに応じて増加
+      const mpRecovery = 10 + stage*5;
+      player.mp = Math.min(player.maxMp, player.mp + mpRecovery);
+      logBattle(`${player.name}のMPが${mpRecovery}回復！`);
     }
   });
   if(enemies.every(e=>e.hp<=0)){
@@ -198,8 +202,9 @@ function nextStage(){ spawnEnemies(); updateUI(); saveGame(); }
 
 function useItem(){
   if(itemCount<=0){ logBattle('アイテムがありません'); return; }
-  player.hp=Math.min(player.maxHp,player.hp+50); itemCount--;
-  logBattle('回復アイテム使用！HP+50'); updateUI(); saveGame();
+  const hpRecovery = 50 + stage*10; // ステージに応じて増加
+  player.hp=Math.min(player.maxHp,player.hp+hpRecovery); itemCount--;
+  logBattle('回復アイテム使用！HP+'+hpRecovery); updateUI(); saveGame();
 }
 
 function reduceCooldown(){ skillCooldown=skillCooldown.map(c=>c>0?c-1:0); }
@@ -229,9 +234,18 @@ function updateUI(){
   document.getElementById('player-next').textContent=player.nextExp;
   document.getElementById('player-hp').style.width=(player.hp/player.maxHp*100)+'%';
   document.getElementById('player-mp').style.width=(player.mp/player.maxMp*100)+'%';
+  document.getElementById('player-hp-text').textContent=`${Math.max(0,Math.floor(player.hp))}/${player.maxHp}`;
+  document.getElementById('player-mp-text').textContent=`${Math.max(0,Math.floor(player.mp))}/${player.maxMp}`;
   skillCooldown.forEach((c,i)=>{ document.getElementById('cool'+i).textContent=c>0?`(${c})`:''; });
   document.getElementById('item-count').textContent=itemCount;
   document.getElementById('stage-number').textContent=stage;
+  // 敵HP表示更新
+  document.querySelectorAll('.enemy-box').forEach((div,i)=>{
+    if(enemies[i]){
+      const span=div.querySelector('.enemy-hp');
+      span.textContent=`${Math.max(0,Math.floor(enemies[i].hp))}/${enemies[i].maxHp}`;
+    }
+  });
 }
 
 function updateSkillButtons(){
