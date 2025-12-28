@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>統合RPG</title>
+<title>統合RPG フル統合版</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;font-family:sans-serif;background:#111;color:#fff;display:flex;justify-content:center;overflow-x:hidden;}
@@ -62,9 +62,9 @@ h1{text-align:center;margin-top:50px;}
 <div id="battle-log"></div>
 <div>
 <button onclick="playerAttack()">通常攻撃</button>
-<button onclick="prepareSkill(0)">スキル1<span id="cool0" class="cooldown"></span></button>
-<button onclick="prepareSkill(1)">スキル2<span id="cool1" class="cooldown"></span></button>
-<button onclick="prepareSkill(2)">スキル3<span id="cool2" class="cooldown"></span></button>
+<button onclick="prepareSkill(0)" id="skill0">スキル1<span id="cool0" class="cooldown"></span></button>
+<button onclick="prepareSkill(1)" id="skill1">スキル2<span id="cool1" class="cooldown"></span></button>
+<button onclick="prepareSkill(2)" id="skill2">スキル3<span id="cool2" class="cooldown"></span></button>
 <button onclick="useItem()">回復アイテム(<span id="item-count"></span>)</button>
 </div>
 <div>ステージ: <span id="stage-number"></span></div>
@@ -104,15 +104,15 @@ function startGame(character){
     maxMp:character==='戦士'?50:100, mp:character==='戦士'?50:100, attack:character==='戦士'?20:15,
     level:1, exp:0, nextExp:100,
     skills:[
-      {name:'大斬り', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif'},
-      {name:character==='戦士'?'毒突き':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif'},
-      {name:'雷撃', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif'}
+      {name:'大斬り', power:40, cost:10, effect:'none', color:'#f00', img:'https://i.imgur.com/9bX8hEX.gif', desc:'単体に大ダメージ'},
+      {name:character==='戦士'?'毒突き':'ヒール', power:30, cost:15, effect:character==='戦士'?'poison':'heal', color:'#0f0', img:'https://i.imgur.com/9bX8hEX.gif',
+       desc:character==='戦士'?'毒で毎ターンダメージ':'HPを回復'},
+      {name:'雷撃', power:50, cost:20, effect:'stun', color:'#0ff', img:'https://i.imgur.com/9bX8hEX.gif', desc:'敵を一定確率でスタン'}
     ]
   };
   document.getElementById('player-img').src=character==='戦士'?'https://i.imgur.com/5n0n4lW.gif':'https://i.imgur.com/YOUR_MAGIC_GIF.gif';
   stage=1; itemCount=3; skillCooldown=[0,0,0];
-  loadGame();
-  spawnEnemies(); updateUI(); logBattle('バトル開始！'); switchScreen('screen-battle');
+  loadGame(); spawnEnemies(); updateUI(); logBattle('バトル開始！'); switchScreen('screen-battle'); updateSkillButtons();
 }
 
 // -------------------- ゲーム本体 --------------------
@@ -153,12 +153,18 @@ function prepareSkill(skillIndex){
 }
 
 function useSkill(skillIndex){
-  if(selectedTarget===null){ logBattle('ターゲットを選んでください'); return; }
-  const skill=player.skills[skillIndex]; const enemy=enemies[selectedTarget];
+  if(selectedTarget===null && player.skills[skillIndex].effect!=='heal'){ logBattle('ターゲットを選んでください'); return; }
+  const skill=player.skills[skillIndex]; 
   player.mp-=skill.cost; skillCooldown[skillIndex]=3;
-  let damage=skill.effect==='heal'?0:skill.power*(attrMultiplier[player.attr][enemy.attr]||1);
-  if(skill.effect==='heal'){ player.hp=Math.min(player.maxHp,player.hp+skill.power); logBattle(`${player.name}が回復！HP+${skill.power}`); }
-  else{ enemy.hp-=damage; logBattle(`${player.name}の${skill.name}！${enemy.name}に${damage}ダメージ`); }
+  if(skill.effect==='heal'){
+    player.hp=Math.min(player.maxHp,player.hp+skill.power);
+    logBattle(`${player.name}の${skill.name}！効果: ${skill.desc} HP+${skill.power}`);
+  } else {
+    const enemy=enemies[selectedTarget];
+    let damage=skill.power*(attrMultiplier[player.attr][enemy.attr]||1);
+    enemy.hp-=damage;
+    logBattle(`${player.name}の${skill.name}！効果: ${skill.desc} ${enemy.name}に${damage}ダメージ`);
+  }
   seSkill.play(); showEffect(skillIndex,selectedTarget);
   checkEnemyDefeat(); enemyTurn(); updateUI(); saveGame();
 }
@@ -224,6 +230,13 @@ function updateUI(){
   skillCooldown.forEach((c,i)=>{ document.getElementById('cool'+i).textContent=c>0?`(${c})`:''; });
   document.getElementById('item-count').textContent=itemCount;
   document.getElementById('stage-number').textContent=stage;
+}
+
+function updateSkillButtons(){
+  player.skills.forEach((s,i)=>{
+    const btn=document.getElementById('skill'+i);
+    btn.title = s.desc;
+  });
 }
 
 // -------------------- セーブ・ロード --------------------
