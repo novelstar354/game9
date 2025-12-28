@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>統合RPG フル統合版</title>
+<title>統合RPG</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;font-family:sans-serif;background:#111;color:#fff;display:flex;justify-content:center;overflow-x:hidden;}
@@ -37,7 +37,8 @@ h1{text-align:center;margin-top:50px;}
 <div id="screen-start" class="screen active">
 <h1>統合RPG</h1>
 <div class="start-btn">
-<button onclick="switchScreen('screen-select')">ゲーム開始</button>
+  <button onclick="switchScreen('screen-select')">ゲーム開始</button>
+  <button onclick="deleteSave()">セーブ削除</button>
 </div>
 </div>
 
@@ -250,6 +251,15 @@ function loadGame(){
   if(save){
     const data=JSON.parse(save); player=data.player; stage=data.stage; skillCooldown=data.skillCooldown;
     itemCount=data.itemCount; enemies=data.enemies; logBattle('セーブデータをロードしました'); updateUI();
+  }
+}
+
+// -------------------- セーブ削除 --------------------
+function deleteSave(){
+  if(confirm('本当にセーブを削除しますか？')){
+    localStorage.removeItem('rpgSave');
+    logBattle('セーブデータを削除しました');
+    alert('セーブデータを削除しました');
   }
 }
 </script>
