@@ -10,7 +10,10 @@ body{margin:0;font-family:sans-serif;background:#111;color:#fff;display:flex;jus
 #game{width:100%;max-width:480px;padding:10px;position:relative;}
 .screen{display:none;}
 .screen.active{display:block;}
-button{padding:12px 16px;width:100%;margin:5px 0;font-size:14px;cursor:pointer;}
+    
+button {padding:12px 16px;width:100%;margin:5px 0;font-size:14px;cursor:wait;}
+
+    
 #battle-log{height:180px;overflow-y:auto;background:#222;padding:5px;margin:5px 0;border-radius:5px;font-size:14px;}
 .hp-bar,.mp-bar,.exp-bar{background:#555;height:16px;border-radius:5px;margin:3px 0;position:relative;}
 .hp-bar-inner{background:#4caf50;height:100%;width:100%;border-radius:5px;transition:width 0.3s;}
@@ -33,23 +36,29 @@ h1{text-align:center;margin-top:50px;}
 </style>
 </head>
 <body>
+
 <div id="game">
 <div class="bg-flash" id="bg-flash"></div>
+
 
 <div id="screen-start" class="screen active">
 <h1>統合RPG</h1>
 <div class="start-btn">
+    <div class="kk">
   <button onclick="switchScreen('screen-select')">ゲーム開始</button>
   <button onclick="deleteSave()">セーブ削除</button>
+        </div>
 </div>
 </div>
 
 <div id="screen-select" class="screen">
 <h2>キャラクター選択</h2>
+<div class="kk">
 <button onclick="startGame('戦士')">戦士</button>
 <button onclick="startGame('魔法使い')">魔法使い</button>
 </div>
-
+</div>
+<div>
 <div id="screen-battle" class="screen">
 <h2>バトル</h2>
 <div>
@@ -62,7 +71,7 @@ EXP:<span id="player-exp"></span>/<span id="player-next"></span>
 <div id="player-container"><img id="player-img" src=""></div>
 <div class="enemy-container" id="enemy-container"></div>
 <div id="battle-log"></div>
-<div>
+<div class="cc">
 <button onclick="playerAttack()">通常攻撃</button>
 <button onclick="prepareSkill(0)" id="skill0">スキル1:物理<span id="cool0" class="cooldown"></span></button>
 <button onclick="prepareSkill(1)" id="skill1">スキル2:特殊<span id="cool1" class="cooldown"></span></button>
@@ -71,11 +80,12 @@ EXP:<span id="player-exp"></span>/<span id="player-next"></span>
 </div>
 <div>ステージ: <span id="stage-number"></span></div>
 </div>
-
+<div class="kk">
 <div id="screen-result" class="screen">
 <h2>バトル終了</h2>
 <div id="result-message"></div>
 <button onclick="restartGame()">リトライ</button>
+</div>
 </div>
 </div>
 
